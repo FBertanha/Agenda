@@ -4,4 +4,5 @@
     <string name="campo_endereco">Address</string>
     <string name="campo_telefone">Telephone</string>
     <string name="campo_site">Site</string>
+    <string name="espera">Wait</string>
 </resources>

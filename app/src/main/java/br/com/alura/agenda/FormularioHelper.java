@@ -65,7 +65,9 @@ public class FormularioHelper {
 
     public void loadFoto(String caminhoFoto) {
         if (caminhoFoto != null) {
-            Bitmap bitmap = BitmapFactory.decodeFile(caminhoFoto);
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 10;
+            Bitmap bitmap = BitmapFactory.decodeFile(caminhoFoto, opts);
             bitmap = bitmap.createScaledBitmap(bitmap, 300, 300, true);
             campoFoto.setImageBitmap(bitmap);
             campoFoto.setScaleType(ImageView.ScaleType.FIT_XY);

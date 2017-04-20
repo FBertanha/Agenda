@@ -17,6 +17,8 @@ import br.com.alura.agenda.ListaAlunosActivity;
 import br.com.alura.agenda.R;
 import br.com.alura.agenda.modelo.Aluno;
 
+import static android.R.attr.bitmap;
+
 /**
  * Created by felipe on 16/04/17.
  */
@@ -59,8 +61,12 @@ public class AlunosAdapter extends BaseAdapter{
         ImageView campoFoto = (ImageView) view.findViewById(R.id.item_foto);
         String caminhoFoto = aluno.getCaminhoFoto();
         if (caminhoFoto != null) {
-            Bitmap bitmap = BitmapFactory.decodeFile(caminhoFoto);
-            bitmap = bitmap.createScaledBitmap(bitmap, 100, 100, true);
+
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 10;
+
+            Bitmap bitmap = BitmapFactory.decodeFile(caminhoFoto, opts);
+            bitmap = bitmap.createScaledBitmap(bitmap, 60, 60, true);
             campoFoto.setImageBitmap(bitmap);
             campoFoto.setScaleType(ImageView.ScaleType.FIT_XY);
             //campoFoto.setTag(caminhoFoto);
