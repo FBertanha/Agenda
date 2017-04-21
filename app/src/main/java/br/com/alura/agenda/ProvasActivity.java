@@ -1,6 +1,7 @@
 package br.com.alura.agenda;
 
 import android.content.Intent;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -29,8 +30,36 @@ public class ProvasActivity extends AppCompatActivity {
 
         tx.replace(R.id.frame_principal, new ListaProvasFragment());
 
+        if (isModoPaisagem()) {
+            tx.replace(R.id.frame_secundario, new DetalhesProvaFragment());
+        }
+
+
         tx.commit();
 
+
+    }
+
+    private boolean isModoPaisagem() {
+        return getResources().getBoolean(R.bool.modoPaisagen);
+    }
+
+    public void selecionaProva(Prova prova) {
+        FragmentManager manager = getSupportFragmentManager();
+
+        if (!isModoPaisagem()) {
+            FragmentTransaction tx = manager.beginTransaction();
+
+            DetalhesProvaFragment detalhesFragment = new DetalhesProvaFragment();
+            Bundle parametros = new Bundle();
+            parametros.putSerializable("prova", prova);
+            detalhesFragment.setArguments(parametros);
+
+            tx.replace(R.id.frame_principal, detalhesFragment);
+            tx.commit();
+        } else {
+            DetalhesProvaFragment detalhesFragment = (DetalhesProvaFragment) manager.findFragmentById(R.id.frame_secundario);
+        }
 
     }
 }
