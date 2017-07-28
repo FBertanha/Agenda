@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
 
 
     public AlunoDAO(Context context) {
-        super(context, "agenda", null, 2);
+        super(context, "agenda", null, 3);
     }
 
     @Override
@@ -45,6 +44,16 @@ public class AlunoDAO extends SQLiteOpenHelper{
             case 1:
                 sql = "alter table alunos " +
                         "add column caminhoFoto varchar(255)";
+            case 2:
+                sql = "CREATE TABLE alunos_novos (" +
+                        "id CHAR(36) PRIMARY KEY, " +
+                        "nome varchar(255) not null, " +
+                        "endereco varchar(255), " +
+                        "telefone varchar(12), " +
+                        "site varchar(255), " +
+                        "nota real, " +
+                        "caminhoFoto varchar(255)" +
+                        ");";
 
         }
         db.execSQL(sql);
@@ -56,7 +65,8 @@ public class AlunoDAO extends SQLiteOpenHelper{
 
         ContentValues dados = getDadosAluno(aluno);
 
-        db.insert("alunos", null, dados);
+        long id = db.insert("alunos", null, dados);
+        aluno.setId(id);
     }
 
     @NonNull

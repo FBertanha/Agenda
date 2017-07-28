@@ -1,12 +1,8 @@
 package br.com.alura.agenda;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,10 +28,10 @@ public class ListaProvasFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_lista_provas, container, false);
 
         List<String> topicosPort = Arrays.asList("Sujeito", "Objeto direto", "Objeto indireto");
-        Prova provaPortugues =  new Prova("Portuges", "25/05/2016", topicosPort);
+        Prova provaPortugues = new Prova("Portugues", "25/05/2016", topicosPort);
 
         List<String> topicosMat = Arrays.asList("Equações de segundo grau", "Limite", "Derivada");
-        Prova provaMat = new Prova("Matematica", "09/09/2016", topicosMat);
+        Prova provaMat = new Prova("Matemática", "09/09/2016", topicosMat);
 
 
         List<Prova> provas = Arrays.asList(provaPortugues, provaMat);
