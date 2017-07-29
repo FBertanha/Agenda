@@ -1,6 +1,5 @@
 package br.com.alura.agenda.adapter;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,11 +12,8 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import br.com.alura.agenda.ListaAlunosActivity;
 import br.com.alura.agenda.R;
 import br.com.alura.agenda.modelo.Aluno;
-
-import static android.R.attr.bitmap;
 
 /**
  * Created by felipe on 16/04/17.
@@ -45,7 +41,8 @@ public class AlunosAdapter extends BaseAdapter{
 
     @Override
     public long getItemId(int position) {
-        return alunos.get(position).getId();
+        //return alunos.get(position).getId();
+        return 0;
     }
 
     @Override
