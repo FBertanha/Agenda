@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,7 +23,12 @@ import java.util.List;
 
 import br.com.alura.agenda.adapter.AlunosAdapter;
 import br.com.alura.agenda.dao.AlunoDAO;
+import br.com.alura.agenda.dto.AlunoSync;
 import br.com.alura.agenda.modelo.Aluno;
+import br.com.alura.agenda.retrofit.RetrofitInicializador;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ListaAlunosActivity extends AppCompatActivity {
 
@@ -83,6 +89,24 @@ public class ListaAlunosActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        Call<AlunoSync> call = new RetrofitInicializador().getAlunoService().lista();
+        call.enqueue(new Callback<AlunoSync>() {
+            @Override
+            public void onResponse(Call<AlunoSync> call, Response<AlunoSync> response) {
+                AlunoSync alunosSync = response.body();
+
+                AlunoDAO dao = new AlunoDAO(ListaAlunosActivity.this);
+                dao.syncAlunos(alunosSync.getAlunos());
+                dao.close();
+                carregarLista();
+            }
+
+            @Override
+            public void onFailure(Call<AlunoSync> call, Throwable t) {
+                Log.e("onFailure: ", t.getMessage());
+            }
+        });
 
         carregarLista();
 

@@ -55,8 +55,8 @@ public class AlunoDAO extends SQLiteOpenHelper{
 
     public void addAluno(Aluno aluno) {
         SQLiteDatabase db = getWritableDatabase();
-
-        aluno.setId(geraUUID());
+        if (aluno.getId() == null)
+            aluno.setId(geraUUID());
         ContentValues dados = getDadosAluno(aluno);
         db.insert("alunos", null, dados);
         //aluno.setId(id);
@@ -155,4 +155,23 @@ public class AlunoDAO extends SQLiteOpenHelper{
     }
 
 
+    public void syncAlunos(List<Aluno> alunos) {
+        for (Aluno aluno :
+                alunos) {
+            if (!exists(aluno))
+                addAluno(aluno);
+            else
+                editAluno(aluno);
+
+        }
+    }
+
+    private boolean exists(Aluno aluno) {
+        SQLiteDatabase readableDatabase = getReadableDatabase();
+
+        Cursor cursor = readableDatabase.rawQuery("SELECT id FROM alunos WHERE id = ? LIMIT 1", new String[]{aluno.getId()});
+        boolean b = cursor.getCount() > 0;
+        cursor.close();
+        return b;
+    }
 }
