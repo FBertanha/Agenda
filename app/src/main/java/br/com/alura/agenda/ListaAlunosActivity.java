@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -34,22 +35,14 @@ public class ListaAlunosActivity extends AppCompatActivity {
 
     public static final int REQUEST_CODE_RECEIVE_SMS = 001;
     private ListView listaAlunos;
+    private SwipeRefreshLayout swipe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista_alunos);
+        loadStetho();
 
-        // Create an InitializerBuilder
-        Stetho.InitializerBuilder initializerBuilder = Stetho.newInitializerBuilder(this);
-        // Enable Chrome DevTools
-        initializerBuilder.enableWebKitInspector(
-                Stetho.defaultInspectorModulesProvider(this)
-        );
-        // Use the InitializerBuilder to generate an Initializer
-        Stetho.Initializer initializer = initializerBuilder.build();
-        // Initialize Stetho with the Initializer
-        Stetho.initialize(initializer);
 
         //Permissões de SMS
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
@@ -60,6 +53,13 @@ public class ListaAlunosActivity extends AppCompatActivity {
         }
 
         listaAlunos = (ListView) findViewById(R.id.lista_alunos);
+        swipe = (SwipeRefreshLayout) findViewById(R.id.swipe_lista_alunos);
+        swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                buscaAlunos();
+            }
+        });
 
         listaAlunos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -84,13 +84,31 @@ public class ListaAlunosActivity extends AppCompatActivity {
         });
 
         registerForContextMenu(listaAlunos);
+
+        buscaAlunos();
+    }
+
+    private void loadStetho() {
+        // Create an InitializerBuilder
+        Stetho.InitializerBuilder initializerBuilder = Stetho.newInitializerBuilder(this);
+        // Enable Chrome DevTools
+        initializerBuilder.enableWebKitInspector(
+                Stetho.defaultInspectorModulesProvider(this)
+        );
+        // Use the InitializerBuilder to generate an Initializer
+        Stetho.Initializer initializer = initializerBuilder.build();
+        // Initialize Stetho with the Initializer
+        Stetho.initialize(initializer);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        carregarLista();
+    }
 
-        Call<AlunoSync> call = new RetrofitInicializador().getAlunoService().lista();
+    private void buscaAlunos() {
+        Call<AlunoSync> call = new RetrofitInicializador().getAlunoService().list();
         call.enqueue(new Callback<AlunoSync>() {
             @Override
             public void onResponse(Call<AlunoSync> call, Response<AlunoSync> response) {
@@ -100,16 +118,15 @@ public class ListaAlunosActivity extends AppCompatActivity {
                 dao.syncAlunos(alunosSync.getAlunos());
                 dao.close();
                 carregarLista();
+                swipe.setRefreshing(false);
             }
 
             @Override
             public void onFailure(Call<AlunoSync> call, Throwable t) {
                 Log.e("onFailure: ", t.getMessage());
+                swipe.setRefreshing(false);
             }
         });
-
-        carregarLista();
-
     }
 
     @Override
@@ -195,12 +212,22 @@ public class ListaAlunosActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
 
-                Toast.makeText(ListaAlunosActivity.this, "Deletar o aluno " + aluno.getNome(), Toast.LENGTH_SHORT).show();
+                Call<Void> call = new RetrofitInicializador().getAlunoService().delete(aluno.getId());
 
-                AlunoDAO dao = new AlunoDAO(ListaAlunosActivity.this);
-                dao.deleteAluno(aluno);
-                dao.close();
-                carregarLista();
+                call.enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        AlunoDAO dao = new AlunoDAO(ListaAlunosActivity.this);
+                        dao.deleteAluno(aluno);
+                        dao.close();
+                        carregarLista();
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        Toast.makeText(ListaAlunosActivity.this, "Não foi possível remover o aluno", Toast.LENGTH_LONG).show();
+                    }
+                });
 
                 return false;
             }

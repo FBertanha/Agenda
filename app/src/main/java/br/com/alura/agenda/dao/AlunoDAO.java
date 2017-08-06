@@ -81,13 +81,13 @@ public class AlunoDAO extends SQLiteOpenHelper{
         SQLiteDatabase db = getReadableDatabase();
         Cursor c = db.rawQuery(sql, null);
 
-        List<Aluno> alunos = populaAlunos(c);
+        List<Aluno> alunos = populateAluno(c);
         c.close();
         return alunos;
     }
 
     @NonNull
-    private List<Aluno> populaAlunos(Cursor c) {
+    private List<Aluno> populateAluno(Cursor c) {
         List<Aluno> alunos = new ArrayList<Aluno>();
         while (c.moveToNext()) {
             Aluno aluno = new Aluno();
