@@ -17,6 +17,7 @@ public class Aluno implements Serializable {
     private String site;
     private Float nota;
     private String caminhoFoto;
+    private int desativado;
 
     public String getId() {
         return id;
@@ -77,5 +78,17 @@ public class Aluno implements Serializable {
     @Override
     public String toString() {
         return getNome();
+    }
+
+    public int getDesativado() {
+        return desativado;
+    }
+
+    public boolean isDesativado() {
+        return desativado == 1;
+    }
+
+    public void setDesativado(int desativado) {
+        this.desativado = desativado;
     }
 }

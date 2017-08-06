@@ -20,11 +20,16 @@ import android.widget.Toast;
 
 import com.facebook.stetho.Stetho;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.util.List;
 
 import br.com.alura.agenda.adapter.AlunosAdapter;
 import br.com.alura.agenda.dao.AlunoDAO;
 import br.com.alura.agenda.dto.AlunoSync;
+import br.com.alura.agenda.event.AtualizaListaAlunoEvent;
 import br.com.alura.agenda.modelo.Aluno;
 import br.com.alura.agenda.retrofit.RetrofitInicializador;
 import retrofit2.Call;
@@ -36,6 +41,7 @@ public class ListaAlunosActivity extends AppCompatActivity {
     public static final int REQUEST_CODE_RECEIVE_SMS = 001;
     private ListView listaAlunos;
     private SwipeRefreshLayout swipe;
+    private EventBus eventBus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +49,7 @@ public class ListaAlunosActivity extends AppCompatActivity {
         setContentView(R.layout.activity_lista_alunos);
         loadStetho();
 
+        eventBus = EventBus.getDefault();
 
         //Permissões de SMS
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
@@ -88,6 +95,11 @@ public class ListaAlunosActivity extends AppCompatActivity {
         buscaAlunos();
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void atualizaListaAlunosEvent(AtualizaListaAlunoEvent event) {
+        carregarLista();
+    }
+
     private void loadStetho() {
         // Create an InitializerBuilder
         Stetho.InitializerBuilder initializerBuilder = Stetho.newInitializerBuilder(this);
@@ -102,8 +114,17 @@ public class ListaAlunosActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        //Pausa o subscriber pois a activity não está mais visível
+        eventBus.unregister(this);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        //Subscribe ao iniciar activity
+        eventBus.register(this);
         carregarLista();
     }
 
