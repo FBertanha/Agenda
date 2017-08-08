@@ -1,5 +1,6 @@
 package br.com.alura.agenda;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -28,10 +29,10 @@ import java.util.List;
 
 import br.com.alura.agenda.adapter.AlunosAdapter;
 import br.com.alura.agenda.dao.AlunoDAO;
-import br.com.alura.agenda.dto.AlunoSync;
 import br.com.alura.agenda.event.AtualizaListaAlunoEvent;
 import br.com.alura.agenda.modelo.Aluno;
 import br.com.alura.agenda.retrofit.RetrofitInicializador;
+import br.com.alura.agenda.sync.AlunoSicronizador;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,6 +40,8 @@ import retrofit2.Response;
 public class ListaAlunosActivity extends AppCompatActivity {
 
     public static final int REQUEST_CODE_RECEIVE_SMS = 001;
+    public static final int REQUEST_CODE_NETWORK_STATE = 002;
+    private final AlunoSicronizador alunoSicronizador = new AlunoSicronizador(this);
     private ListView listaAlunos;
     private SwipeRefreshLayout swipe;
     private EventBus eventBus;
@@ -50,21 +53,16 @@ public class ListaAlunosActivity extends AppCompatActivity {
         loadStetho();
 
         eventBus = EventBus.getDefault();
+        permissoes();
 
-        //Permissões de SMS
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Soliçitando permissão para SMS", Toast.LENGTH_LONG).show();
-            ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.RECEIVE_SMS}, REQUEST_CODE_RECEIVE_SMS);
-        } else {
-            //Toast.makeText(this, "Permissão de SMS garantida!", Toast.LENGTH_LONG).show();
-        }
 
         listaAlunos = (ListView) findViewById(R.id.lista_alunos);
         swipe = (SwipeRefreshLayout) findViewById(R.id.swipe_lista_alunos);
         swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                buscaAlunos();
+                alunoSicronizador.buscaTodos();
+                alunoSicronizador.sicronizaAlunosInternos();
             }
         });
 
@@ -92,11 +90,28 @@ public class ListaAlunosActivity extends AppCompatActivity {
 
         registerForContextMenu(listaAlunos);
 
-        buscaAlunos();
+        alunoSicronizador.buscaTodos();
+        alunoSicronizador.sicronizaAlunosInternos();
+    }
+
+    private void permissoes() {
+        //Permissões de SMS
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Soliçitando permissão para SMS", Toast.LENGTH_LONG).show();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS}, REQUEST_CODE_RECEIVE_SMS);
+        } else {
+            //Toast.makeText(this, "Permissão de SMS garantida!", Toast.LENGTH_LONG).show();
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CHANGE_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Soliçitando permissao para Conexao com internet", Toast.LENGTH_LONG).show();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CHANGE_NETWORK_STATE}, REQUEST_CODE_NETWORK_STATE);
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void atualizaListaAlunosEvent(AtualizaListaAlunoEvent event) {
+        if (swipe.isRefreshing()) swipe.setRefreshing(false);
         carregarLista();
     }
 
@@ -126,28 +141,6 @@ public class ListaAlunosActivity extends AppCompatActivity {
         //Subscribe ao iniciar activity
         eventBus.register(this);
         carregarLista();
-    }
-
-    private void buscaAlunos() {
-        Call<AlunoSync> call = new RetrofitInicializador().getAlunoService().list();
-        call.enqueue(new Callback<AlunoSync>() {
-            @Override
-            public void onResponse(Call<AlunoSync> call, Response<AlunoSync> response) {
-                AlunoSync alunosSync = response.body();
-
-                AlunoDAO dao = new AlunoDAO(ListaAlunosActivity.this);
-                dao.syncAlunos(alunosSync.getAlunos());
-                dao.close();
-                carregarLista();
-                swipe.setRefreshing(false);
-            }
-
-            @Override
-            public void onFailure(Call<AlunoSync> call, Throwable t) {
-                Log.e("onFailure: ", t.getMessage());
-                swipe.setRefreshing(false);
-            }
-        });
     }
 
     @Override
@@ -263,6 +256,11 @@ public class ListaAlunosActivity extends AppCompatActivity {
     private void carregarLista() {
         AlunoDAO dao = new AlunoDAO(this);
         List<Aluno> alunos = dao.allAlunos();
+
+        for (Aluno aluno :
+                alunos) {
+            Log.i("ALUNO-SICRONIZADO: ", String.valueOf(aluno.isSicronizado()));
+        }
         dao.close();
 
         AlunosAdapter adapter = new AlunosAdapter(this, alunos);

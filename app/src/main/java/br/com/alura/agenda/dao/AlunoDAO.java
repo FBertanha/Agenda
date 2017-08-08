@@ -21,7 +21,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
 
 
     public AlunoDAO(Context context) {
-        super(context, "agenda", null, 1);
+        super(context, "agenda", null, 2);
     }
 
     @Override
@@ -33,7 +33,8 @@ public class AlunoDAO extends SQLiteOpenHelper{
                 "telefone varchar(12), " +
                 "site varchar(255), " +
                 "nota real, " +
-                "caminhoFoto varchar(255)" +
+                "caminhoFoto varchar(255), " +
+                "sicronizado INT DEFAULT 0" +
                 ");";
         db.execSQL(sql);
     }
@@ -43,7 +44,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
         String sql = "";
         switch (oldVersion) {
             case 1:
-                sql = "";
+                sql = "ALTER TABLE alunos add column sicronizado INT DEFAULT 0;";
         }
         db.execSQL(sql);
         //onCreate(db);
@@ -72,6 +73,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
         dados.put("site", aluno.getSite());
         dados.put("nota", aluno.getNota());
         dados.put("caminhoFoto", aluno.getCaminhoFoto());
+        dados.put("sicronizado", aluno.getSicronizado());
 
         return dados;
     }
@@ -98,6 +100,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
             aluno.setSite(c.getString(c.getColumnIndex("site")));
             aluno.setNota(c.getFloat(c.getColumnIndex("nota")));
             aluno.setCaminhoFoto(c.getString(c.getColumnIndex("caminhoFoto")));
+            aluno.setSicronizado(c.getInt(c.getColumnIndex("sicronizado")));
 
             alunos.add(aluno);
         }
@@ -158,6 +161,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
     public void syncAlunos(List<Aluno> alunos) {
         for (Aluno aluno :
                 alunos) {
+            aluno.sicroniza();
             if (!exists(aluno) && !aluno.isDesativado()) {
                 addAluno(aluno);
             } else {
@@ -168,6 +172,14 @@ public class AlunoDAO extends SQLiteOpenHelper{
                 }
             }
         }
+    }
+
+    public List<Aluno> listNotSync() {
+        SQLiteDatabase readableDatabase = getReadableDatabase();
+        Cursor cursor = readableDatabase.rawQuery("SELECT * FROM alunos WHERE sicronizado = 0", null);
+        List<Aluno> alunos = populateAluno(cursor);
+        cursor.close();
+        return alunos;
     }
 
 
