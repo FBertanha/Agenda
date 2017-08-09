@@ -31,11 +31,7 @@ import br.com.alura.agenda.adapter.AlunosAdapter;
 import br.com.alura.agenda.dao.AlunoDAO;
 import br.com.alura.agenda.event.AtualizaListaAlunoEvent;
 import br.com.alura.agenda.modelo.Aluno;
-import br.com.alura.agenda.retrofit.RetrofitInicializador;
 import br.com.alura.agenda.sync.AlunoSicronizador;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ListaAlunosActivity extends AppCompatActivity {
 
@@ -226,22 +222,12 @@ public class ListaAlunosActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
 
-                Call<Void> call = new RetrofitInicializador().getAlunoService().delete(aluno.getId());
+                AlunoDAO dao = new AlunoDAO(ListaAlunosActivity.this);
+                dao.deleteAluno(aluno);
+                dao.close();
+                carregarLista();
 
-                call.enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(Call<Void> call, Response<Void> response) {
-                        AlunoDAO dao = new AlunoDAO(ListaAlunosActivity.this);
-                        dao.deleteAluno(aluno);
-                        dao.close();
-                        carregarLista();
-                    }
-
-                    @Override
-                    public void onFailure(Call<Void> call, Throwable t) {
-                        Toast.makeText(ListaAlunosActivity.this, "Não foi possível remover o aluno", Toast.LENGTH_LONG).show();
-                    }
-                });
+                alunoSicronizador.deleta(aluno);
 
                 return false;
             }

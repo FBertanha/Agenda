@@ -112,4 +112,9 @@ public class Aluno implements Serializable {
     public void desicroniza() {
         sicronizado = 0;
     }
+
+    public void desativa() {
+        desativado = 1;
+        desicroniza();
+    }
 }

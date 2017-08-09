@@ -21,7 +21,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
 
 
     public AlunoDAO(Context context) {
-        super(context, "agenda", null, 2);
+        super(context, "agenda", null, 3);
     }
 
     @Override
@@ -34,7 +34,8 @@ public class AlunoDAO extends SQLiteOpenHelper{
                 "site varchar(255), " +
                 "nota real, " +
                 "caminhoFoto varchar(255), " +
-                "sicronizado INT DEFAULT 0" +
+                "sicronizado INT DEFAULT 0," +
+                "desativado INT DEFAULT 0" +
                 ");";
         db.execSQL(sql);
     }
@@ -44,9 +45,11 @@ public class AlunoDAO extends SQLiteOpenHelper{
         String sql = "";
         switch (oldVersion) {
             case 1:
-                sql = "ALTER TABLE alunos add column sicronizado INT DEFAULT 0;";
+                db.execSQL("ALTER TABLE alunos add column sicronizado INT DEFAULT 0;");
+            case 2:
+                db.execSQL("ALTER TABLE alunos add column desativado INT DEFAULT 0;");
         }
-        db.execSQL(sql);
+
         //onCreate(db);
     }
 
@@ -74,12 +77,13 @@ public class AlunoDAO extends SQLiteOpenHelper{
         dados.put("nota", aluno.getNota());
         dados.put("caminhoFoto", aluno.getCaminhoFoto());
         dados.put("sicronizado", aluno.getSicronizado());
+        dados.put("desativado", aluno.getDesativado());
 
         return dados;
     }
 
     public List<Aluno> allAlunos() {
-        String sql = "SELECT * FROM alunos";
+        String sql = "SELECT * FROM alunos WHERE desativado = 0";
         SQLiteDatabase db = getReadableDatabase();
         Cursor c = db.rawQuery(sql, null);
 
@@ -101,6 +105,7 @@ public class AlunoDAO extends SQLiteOpenHelper{
             aluno.setNota(c.getFloat(c.getColumnIndex("nota")));
             aluno.setCaminhoFoto(c.getString(c.getColumnIndex("caminhoFoto")));
             aluno.setSicronizado(c.getInt(c.getColumnIndex("sicronizado")));
+            aluno.setDesativado(c.getInt(c.getColumnIndex("desativado")));
 
             alunos.add(aluno);
         }
@@ -111,7 +116,13 @@ public class AlunoDAO extends SQLiteOpenHelper{
         SQLiteDatabase db = getWritableDatabase();
         String[] params = {aluno.getId()};
 
-        db.delete("alunos", "id = ?", params);
+        if (aluno.isDesativado()) {
+            db.delete("alunos", "id = ?", params);
+        } else {
+            aluno.desativa();
+            editAluno(aluno);
+        }
+
     }
 
     public void editAluno(Aluno aluno) {

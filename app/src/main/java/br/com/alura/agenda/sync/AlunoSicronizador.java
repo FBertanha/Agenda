@@ -94,4 +94,22 @@ public class AlunoSicronizador {
 
         alunoDAO.close();
     }
+
+    public void deleta(final Aluno aluno) {
+        Call<Void> call = new RetrofitInicializador().getAlunoService().delete(aluno.getId());
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                AlunoDAO alunoDAO = new AlunoDAO(context);
+                alunoDAO.deleteAluno(aluno);
+                alunoDAO.close();
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+//                Toast.makeText(context, "Não foi possível remover o aluno", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
 }
